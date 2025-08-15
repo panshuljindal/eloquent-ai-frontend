@@ -1,6 +1,5 @@
 import { BackendMessage, ConversationSummary, Message, Role } from '../types/chat';
-
-const API_BASE = 'http://localhost:8000/api/chat';
+import { CHAT_API_BASE as API_BASE } from 'config/env';
 
 function mapBackendMessage(raw: BackendMessage): Message | null {
   if (!raw) return null;
@@ -50,4 +49,11 @@ export async function postChatOnce(payload: { conversation_id: string | null; me
   const rawMessages = (json?.data?.messages ?? json?.messages ?? []) as BackendMessage[];
   const mapped = rawMessages.map(mapBackendMessage).filter((m): m is Message => Boolean(m));
   return { conversationId, messages: mapped };
+}
+
+export async function deleteConversation(conversationId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/delete/${conversationId}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error('Failed to delete conversation');
 }

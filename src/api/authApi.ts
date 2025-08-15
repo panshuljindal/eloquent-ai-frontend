@@ -1,6 +1,5 @@
+import { AUTH_API_BASE as API_BASE } from 'config/env';
 type AuthResponse = { data?: { user_id?: string | number; user?: { id?: string | number; name?: string }; message?: string }; user_id?: string | number; user?: { id?: string | number; name?: string }; message?: string };
-
-const API_BASE = 'http://localhost:8000/api/auth';
 
 function extractUser(json: AuthResponse): { id?: string; name?: string } {
   const idRaw = json?.data?.user?.id ?? json?.data?.user_id ?? json?.user?.id ?? json?.user_id;

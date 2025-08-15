@@ -4,7 +4,7 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { LS_KEYS } from "./utils/storage";
 import { timeAgo } from "./utils/time";
 import { ConversationSummary, Message } from "./types/chat";
-import { fetchConversationList, fetchConversationMessages, postChatOnce } from "./api/chatApi";
+import { deleteConversation, fetchConversationList, fetchConversationMessages, postChatOnce } from "./api/chatApi";
 import { SidebarConversationItem } from "./components/SidebarConversationItem";
 import { ChatBubble } from "./components/ChatBubble";
 import { Composer } from "./components/Composer";
@@ -140,10 +140,15 @@ export default function ChatApp() {
     }
   }
 
-  function handleDeleteSummary(id: string) {
+  async function handleDeleteSummary(id: string) {
     setConversationSummaries((prev) => prev.filter((c) => c.id !== id));
     if (currentConversationId === id) {
       handleNewChat();
+    }
+    try {
+        await deleteConversation(id);
+    } catch (err) {
+      console.error(err);
     }
   }
 
