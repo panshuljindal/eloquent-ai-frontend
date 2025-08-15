@@ -154,42 +154,61 @@ export default function ChatApp() {
 
   const sidebar = (
     <div className={cn(
-      "h-full flex flex-col transition-all",
+      "h-full flex flex-col transition-all overflow-hidden",
       theme === "dark" ? "bg-[#17181c] border-r border-white/5" : "bg-gray-50 border-r border-black/10",
       collapsed ? "w-14" : "w-80"
     )}>
-      <div className={cn("flex items-center justify-between p-3 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
-        <button
-          onClick={handleNewChat}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-[#10a37f] text-white hover:bg-[#0e8e6f]"
-          title="New chat"
-        >
-          <Plus size={16} /> {!collapsed && "New chat"}
-        </button>
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5"
-          title={collapsed ? "Expand" : "Collapse"}
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
-      </div>
+      {collapsed ? (
+        <div className={cn("flex flex-col items-center p-2 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
+          <button
+            onClick={handleNewChat}
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#10a37f] text-white hover:bg-[#0e8e6f]"
+            title="New chat"
+          >
+            <Plus size={16} />
+          </button>
+          <button
+            onClick={() => setCollapsed(false)}
+            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5"
+            title="Expand"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      ) : (
+        <div className={cn("flex items-center justify-between p-3 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
+          <button
+            onClick={handleNewChat}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-[#10a37f] text-white hover:bg-[#0e8e6f]"
+            title="New chat"
+          >
+            <Plus size={16} /> New chat
+          </button>
+          <button
+            onClick={() => setCollapsed(true)}
+            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5"
+            title="Collapse"
+          >
+            <ChevronLeft size={18} />
+          </button>
+        </div>
+      )}
 
       {!collapsed && (
         <div className="px-3 py-2 text-xs uppercase tracking-wide text-gray-500 dark:text-white/40">Conversations</div>
       )}
-      <div className="flex-1 overflow-auto p-2 space-y-1">
+      <div className={cn("flex-1 overflow-auto p-2 space-y-1", collapsed && "hidden") }>
         {conversationSummaries.length === 0 && !collapsed && (
           <div className="text-xs text-gray-500 dark:text-white/40 px-2">No conversations yet.</div>
         )}
-        {conversationSummaries.map((c) => (
+        {!collapsed && conversationSummaries.map((c) => (
           <SidebarConversationItem
             key={c.id}
             active={c.id === currentConversationId}
             title={c.title}
             subtitle={c.last_message_preview ? `${c.last_message_preview} • ${timeAgo(c.created_at)}` : timeAgo(c.created_at)}
             onClick={() => handleSelectConversation(c.id)}
-            onDelete={() => handleDeleteSummary(c.id)}
+            onDelete={!collapsed ? () => handleDeleteSummary(c.id) : undefined}
           />
         ))}
       </div>
