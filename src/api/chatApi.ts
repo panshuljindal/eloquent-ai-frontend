@@ -1,5 +1,6 @@
 import { BackendMessage, ConversationSummary, Message, Role } from '../types/chat';
 import { CHAT_API_BASE as API_BASE } from 'config/env';
+import { getFromLocalStorage, LS_KEYS } from '../utils/storage'
 
 function mapBackendMessage(raw: BackendMessage): Message | null {
   if (!raw) return null;
@@ -14,9 +15,10 @@ function mapBackendMessage(raw: BackendMessage): Message | null {
 
 export async function fetchConversationList(userId?: string): Promise<ConversationSummary[]> {
   const url = `${API_BASE}/conversations${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`;
+  const token = getFromLocalStorage<string | null>(LS_KEYS.token, null);
   const res = await fetch(url, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Failed to fetch conversations');
   const json = await res.json();
@@ -30,7 +32,10 @@ export async function fetchConversationList(userId?: string): Promise<Conversati
 }
 
 export async function fetchConversationMessages(conversationId: string): Promise<Message[]> {
-  const res = await fetch(`${API_BASE}/messages/${conversationId}`);
+  const token = getFromLocalStorage<string | null>(LS_KEYS.token, null);
+  const res = await fetch(`${API_BASE}/messages/${conversationId}`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
   if (!res.ok) throw new Error('Failed to fetch conversation messages');
   const json = await res.json();
   const raw = (json?.data?.messages ?? json?.messages ?? []) as BackendMessage[];
@@ -38,9 +43,10 @@ export async function fetchConversationMessages(conversationId: string): Promise
 }
 
 export async function postChatOnce(payload: { conversation_id: string | null; message: string; user_id?: string | null }): Promise<{ conversationId: string; messages: Message[] }> {
+  const token = getFromLocalStorage<string | null>(LS_KEYS.token, null);
   const res = await fetch(`${API_BASE}/create`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('Chat request failed');
@@ -52,16 +58,19 @@ export async function postChatOnce(payload: { conversation_id: string | null; me
 }
 
 export async function deleteConversation(conversationId: string): Promise<void> {
+  const token = getFromLocalStorage<string | null>(LS_KEYS.token, null);
   const res = await fetch(`${API_BASE}/delete/${conversationId}`, {
     method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Failed to delete conversation');
 }
 
 export async function summarizeConversation(conversationId: string): Promise<string> {
+  const token = getFromLocalStorage<string | null>(LS_KEYS.token, null);
   const res = await fetch(`${API_BASE}/summarize/${conversationId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
   });
   if (!res.ok) throw new Error('Failed to summarize conversation');
   const json = await res.json();

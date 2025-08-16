@@ -4,6 +4,7 @@ export const LS_KEYS = {
   userId: "chat.userId",
   guest: "chat.guestMode",
   profile: "chat.userProfile",
+  token: "chat.token",
 } as const;
 
 export function getFromLocalStorage<T>(key: string, fallback: T): T {

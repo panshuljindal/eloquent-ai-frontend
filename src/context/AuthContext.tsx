@@ -23,11 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useLocalStorage<{ name?: string } | null>(LS_KEYS.profile, null);
   const [, setSummaries] = useLocalStorage<ConversationSummary[]>(LS_KEYS.summaries, []);
   const [, setCurrentConversationId] = useLocalStorage<string | null>(LS_KEYS.currentId, null);
+  const [, setToken] = useLocalStorage<string | null>(LS_KEYS.token, null);
   const login = useCallback(async (email: string, password: string) => {
-    const { userId: id, name } = await loginApi({ email, password });
+    const { userId: id, name, token: returnedToken } = await loginApi({ email, password });
     setUserId(id);
     setProfile({ name });
     setGuest(false);
+    setToken(returnedToken ?? null);
     try {
       const items = await fetchConversationList(id);
       setSummaries(items);
@@ -38,9 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [setUserId, setGuest, setProfile, setSummaries]);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
-    const { userId: id, name: returnedName } = await signupApi({ name, email, password });
+    const { userId: id, name: returnedName, token: returnedToken } = await signupApi({ name, email, password });
     setUserId(id);
     setProfile({ name: returnedName ?? name });
+    setToken(returnedToken ?? null);
     setGuest(false);
     try {
       const items = await fetchConversationList(id);
