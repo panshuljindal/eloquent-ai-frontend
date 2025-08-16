@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
 
 const THEME_KEY = 'theme';
 
@@ -18,7 +18,7 @@ function getInitialTheme(): ThemeMode {
 export function useTheme() {
   const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
