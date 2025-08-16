@@ -3,7 +3,6 @@ import { LoginForm } from '../components/auth/LoginForm';
 import { SignupForm } from '../components/auth/SignupForm';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
-import { Button } from '../components/ui/Button';
 
 export default function AuthPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');

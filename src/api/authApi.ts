@@ -17,7 +17,6 @@ export async function signupApi(payload: { email: string; password: string; name
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-    credentials: 'include',
   });
   let json: AuthResponse | undefined;
   try {
@@ -37,7 +36,6 @@ export async function loginApi(payload: { email: string; password: string }): Pr
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-    credentials: 'include',
   });
   let json: AuthResponse | undefined;
   try {
