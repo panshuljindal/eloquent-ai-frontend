@@ -23,6 +23,7 @@ import remarkGfm from 'remark-gfm';
 export default function ChatApp() {
   const [collapsed, setCollapsed] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [isLoadingConversationHistory, setIsLoadingConversationHistory] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [streaming] = useState(false); // streaming disabled for this backend
@@ -46,15 +47,6 @@ export default function ChatApp() {
     let cancelled = false;
     async function refreshData() {
       if (currentConversationId) {
-        setIsLoading(true);
-        try {
-          const history = await fetchConversationMessages(currentConversationId);
-          if (!cancelled) setMessages(history);
-        } catch (err) {
-          console.warn("Could not load messages:", err);
-        } finally {
-          if (!cancelled) setIsLoading(false);
-        }
       } else if (userId) {
         if (!cancelled) setIsLoadingConversations(true);
         try {
@@ -75,16 +67,15 @@ export default function ChatApp() {
 
   async function handleSelectConversation(id: string) {
     setCurrentConversationId(id);
-    setIsLoading(true);
+    setIsLoadingConversationHistory(true);
     try {
       const history = await fetchConversationMessages(id);
       setMessages(history);
     } catch (err) {
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setIsLoadingConversationHistory(false);
     }
-    // Close mobile sidebar after navigation
     setMobileSidebarOpen(false);
   }
 
@@ -108,8 +99,10 @@ export default function ChatApp() {
     setIsLoading(true);
     try {
       const { conversationId, messages: fullMessages } = await postChatOnce(payload);
-      if (!currentConversationId && conversationId) setCurrentConversationId(conversationId);
-      setMessages(fullMessages);
+      // if (!currentConversationId && conversationId) setCurrentConversationId(conversationId);
+      if(currentConversationId===conversationId){
+        setMessages(fullMessages);
+      }
 
       const summarize = (msgs: Message[]): ConversationSummary => {
         const firstUser = msgs.find((m) => m.role === "user");
@@ -287,12 +280,12 @@ export default function ChatApp() {
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <div className="text-3xl font-semibold mb-2">How can I help today?</div>
+                <div className="text-3xl font-semibold mb-2">How can I help you today?</div>
                 <div className={cn(theme === "dark" ? "text-white/60" : "text-gray-600")}>Ask anything. Your first message will start a new conversation.</div>
               </div>
             </div>
           ) : (
-            <div className="">
+           isLoadingConversationHistory ? <Loader label="Loading Converstion..." className="flex items-center justify-center h-full w-full"/> :  <div className="">
               {messages.map((m) => (
                 <ChatBubble key={m.id} message={m} />
               ))}
@@ -312,11 +305,8 @@ export default function ChatApp() {
                 <div id="summary-title" className="font-semibold text-base">Conversation Summary</div>
                 <div className="flex items-center gap-1">
                   <Button onClick={handleCopySummary} size="sm" variant="neutral" disabled={!summaryText || isSummarizing}>
-                    <Copy size={14} /> {copied ? 'Copied' : 'Copy'}
+                    <Copy size={14} /> {copied ? 'Copied' : ''}
                   </Button>
-                  <IconButton onClick={() => setSummaryModalOpen(false)} label="Close">
-                    <X size={16} />
-                  </IconButton>
                 </div>
               </div>
               <div className={cn("prose max-w-none prose-slate text-[15px] min-h-[60px]", theme === 'dark' ? 'dark:prose-invert' : '')}>
