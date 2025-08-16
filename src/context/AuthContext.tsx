@@ -60,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setGuest(true);
     setSummaries([]);
     setCurrentConversationId(null);
-  }, [setUserId, setGuest, setProfile, setSummaries, setCurrentConversationId]);
+    setToken(null);
+  }, [setUserId, setGuest, setProfile, setSummaries, setCurrentConversationId, setToken]);
 
   const logout = useCallback(() => {
     setUserId(null);
@@ -68,7 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setGuest(false);
     setSummaries([]);
     setCurrentConversationId(null);
-  }, [setUserId, setGuest, setProfile, setSummaries, setCurrentConversationId]);
+    setToken(null);
+  }, [setUserId, setGuest, setProfile, setSummaries, setCurrentConversationId, setToken]);
 
   const value = useMemo<AuthContextValue>(() => ({ userId, guest, displayName: profile?.name ?? null, login, signup, loginAsGuest, logout }), [userId, guest, profile, login, signup, loginAsGuest, logout]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

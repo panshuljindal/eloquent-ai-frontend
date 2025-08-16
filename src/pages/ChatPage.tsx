@@ -61,7 +61,7 @@ export default function ChatApp() {
     return () => {
       cancelled = true;
     };
-  }, [currentConversationId, userId, setConversationSummaries]);
+  }, [userId, setConversationSummaries]);
 
   async function handleSelectConversation(id: string) {
     setCurrentConversationId(id);
@@ -97,9 +97,11 @@ export default function ChatApp() {
     setIsLoading(true);
     try {
       const { conversationId, messages: fullMessages } = await postChatOnce(payload);
-      if (currentConversationId === conversationId) {
-        setMessages(fullMessages);
+      if (!currentConversationId && conversationId) {
+        setCurrentConversationId(conversationId);
       }
+      setMessages(fullMessages);
+
 
       const summarize = (msgs: Message[]): ConversationSummary => {
         const firstUser = msgs.find((m) => m.role === "user");
@@ -262,9 +264,6 @@ export default function ChatApp() {
           <div className="font-medium">Eloquent Operator</div>
           <div className="flex-1" />
           {/* Conversation list loading indicator */}
-          {isLoadingConversations && (
-            <Loader className={cn(theme === 'dark' ? 'text-white/70' : 'text-gray-600')} size={14} label="Syncing" />
-          )}
           <Button onClick={handleSummarize} size="sm" variant="neutral" className="whitespace-nowrap" disabled={!currentConversationId || isSummarizing}>
             <Wand2 size={16} /> <span className="hidden sm:inline">{isSummarizing ? 'Summarizing…' : 'Summarize'}</span>
           </Button>
