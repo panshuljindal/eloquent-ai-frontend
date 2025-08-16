@@ -10,7 +10,7 @@ export function ChatBubble({ message }: { message: Message }) {
   return (
     <div className={cn('w-full')}>
       <div className="max-w-3xl mx-auto px-4 py-5">
-        <div className={cn('flex items-start gap-3', isUser ? 'flex-row-reverse justify-end' : 'justify-start')}>
+        <div className={cn('flex items-center gap-3', isUser ? 'flex-row-reverse justify-end' : 'justify-start')}>
           <div
             className={cn(
               'h-7 w-7 rounded-md flex items-center justify-center text-xs shrink-0',
@@ -22,7 +22,7 @@ export function ChatBubble({ message }: { message: Message }) {
           <div className={cn('max-w-[80%]', isUser ? 'ml-auto' : 'mr-auto')}>
             <div
               className={cn(
-                'rounded-2xl px-3 py-2 prose max-w-none',
+                'rounded-2xl px-3 py-2 prose max-w-none prose-p:my-0 prose-pre:my-0 prose-li:my-0 prose-ul:my-1.5 prose-ol:my-1.5',
                 isUser
                   ? 'prose-invert bg-gray-800 text-white dark:bg-gray-700'
                   : 'prose-slate bg-white border border-black/10 shadow-sm dark:bg-[#2a2b32] dark:border-white/5 dark:prose-invert'
