@@ -57,3 +57,14 @@ export async function deleteConversation(conversationId: string): Promise<void> 
   });
   if (!res.ok) throw new Error('Failed to delete conversation');
 }
+
+export async function summarizeConversation(conversationId: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/summarize/${conversationId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error('Failed to summarize conversation');
+  const json = await res.json();
+  const summary = (json?.data?.summary ?? json?.summary ?? '') as string;
+  return String(summary);
+}

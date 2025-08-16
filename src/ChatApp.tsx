@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, ChevronLeft, ChevronRight, Moon, Sun, User, Menu, X, Wrench } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Moon, Sun, User, Menu, X, Wand2, Copy } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { LS_KEYS } from "./utils/storage";
 import { timeAgo } from "./utils/time";
 import { ConversationSummary, Message } from "./types/chat";
-import { deleteConversation, fetchConversationList, fetchConversationMessages, postChatOnce } from "./api/chatApi";
+import { deleteConversation, fetchConversationList, fetchConversationMessages, postChatOnce, summarizeConversation } from "./api/chatApi";
 import { SidebarConversationItem } from "./components/SidebarConversationItem";
 import { ChatBubble } from "./components/ChatBubble";
 import { Composer } from "./components/Composer";
@@ -15,6 +15,8 @@ import { Button } from "./components/ui/Button";
 import { IconButton } from "./components/ui/IconButton";
 import { Loader } from "./components/ui/Loader";
 import { AppLogo } from "./components/ui/AppLogo";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // using shared cn utility
 
@@ -30,6 +32,10 @@ export default function ChatApp() {
   const [conversationSummaries, setConversationSummaries] = useLocalStorage<ConversationSummary[]>(LS_KEYS.summaries, []);
   const { userId, displayName, logout } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [summaryText, setSummaryText] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -145,6 +151,42 @@ export default function ChatApp() {
     }
   }
 
+  async function handleSummarize() {
+    if (!currentConversationId) return;
+    setIsSummarizing(true);
+    setSummaryText(null);
+    setSummaryModalOpen(true);
+    try {
+      const text = await summarizeConversation(currentConversationId);
+      setSummaryText(text || 'No summary available.');
+    } catch (err) {
+      setSummaryText('Failed to get summary.');
+      console.error(err);
+    } finally {
+      setIsSummarizing(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!summaryModalOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setSummaryModalOpen(false);
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [summaryModalOpen]);
+
+  async function handleCopySummary() {
+    if (!summaryText) return;
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch (_) {
+      // ignore
+    }
+  }
+
   const renderSidebar = (isCollapsed: boolean) => (
     <div className={cn(
       "h-full flex flex-col transition-all overflow-hidden",
@@ -233,9 +275,9 @@ export default function ChatApp() {
           {isLoadingConversations && (
             <Loader className={cn(theme === 'dark' ? 'text-white/70' : 'text-gray-600')} size={14} label="Syncing" />
           )}
-          <IconButton onClick={() => alert('Tools coming soon')} label="Tools">
-            <Wrench size={16} />
-          </IconButton>
+          <Button onClick={handleSummarize} size="sm" variant="neutral" className="whitespace-nowrap" disabled={!currentConversationId || isSummarizing}>
+            <Wand2 size={16} /> <span className="hidden sm:inline">{isSummarizing ? 'Summarizing…' : 'Summarize'}</span>
+          </Button>
           <IconButton onClick={toggle} label={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
@@ -262,6 +304,36 @@ export default function ChatApp() {
         </div>
 
         <Composer disabled={isLoading} onSend={handleSend} />
+        {summaryModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setSummaryModalOpen(false)} />
+            <div className={cn("relative z-10 max-w-2xl w-[92%] rounded-2xl border p-4", theme === 'dark' ? 'bg-[#2a2b32] border-white/10 text-white' : 'bg-white border-black/10 text-gray-900')} role="dialog" aria-modal="true" aria-labelledby="summary-title">
+              <div className="flex items-center justify-between mb-2">
+                <div id="summary-title" className="font-semibold text-base">Conversation Summary</div>
+                <div className="flex items-center gap-1">
+                  <Button onClick={handleCopySummary} size="sm" variant="neutral" disabled={!summaryText || isSummarizing}>
+                    <Copy size={14} /> {copied ? 'Copied' : 'Copy'}
+                  </Button>
+                  <IconButton onClick={() => setSummaryModalOpen(false)} label="Close">
+                    <X size={16} />
+                  </IconButton>
+                </div>
+              </div>
+              <div className={cn("prose max-w-none prose-slate text-[15px] min-h-[60px]", theme === 'dark' ? 'dark:prose-invert' : '')}>
+                {isSummarizing ? (
+                  <Loader label="Summarizing…" className={cn(theme === 'dark' ? 'text-white/70' : 'text-gray-600')} />
+                ) : summaryText ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
+                ) : (
+                  'No summary available.'
+                )}
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button onClick={() => setSummaryModalOpen(false)} size="md" variant="primary">Close</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Mobile sidebar overlay */}
       <div className={cn("fixed inset-0 z-40 md:hidden", mobileSidebarOpen ? "block" : "hidden") }>
