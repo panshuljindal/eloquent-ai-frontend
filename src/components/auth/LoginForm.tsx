@@ -15,10 +15,21 @@ export function LoginForm(props: { onSubmit: (email: string, password: string) =
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    if (!email || !password) {
+    if (!email && !password) {
       setError('Please enter email and password.');
       return;
     }
+
+    if (!email) {
+      setError('Please enter your email.');
+      return;
+    }
+
+    if (!password) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setLoading(true);
     try {
       await onSubmit(email, password);

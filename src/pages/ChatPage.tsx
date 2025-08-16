@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Plus, ChevronLeft, ChevronRight, Moon, Sun, User, Menu, X, Wand2, Copy } from "lucide-react";
-import { useLocalStorage } from "./hooks/useLocalStorage";
-import { LS_KEYS } from "./utils/storage";
-import { timeAgo } from "./utils/time";
-import { ConversationSummary, Message } from "./types/chat";
-import { deleteConversation, fetchConversationList, fetchConversationMessages, postChatOnce, summarizeConversation } from "./api/chatApi";
-import { SidebarConversationItem } from "./components/SidebarConversationItem";
-import { ChatBubble } from "./components/ChatBubble";
-import { Composer } from "./components/Composer";
-import { useTheme } from "./hooks/useTheme";
-import { useAuth } from "./hooks/useAuth";
-import cn from "./utils/cn";
-import { Button } from "./components/ui/Button";
-import { IconButton } from "./components/ui/IconButton";
-import { Loader } from "./components/ui/Loader";
-import { AppLogo } from "./components/ui/AppLogo";
+import { useLocalStorage } from "../hooks/useLocalStorage";
+import { LS_KEYS } from "../utils/storage";
+import { timeAgo } from "../utils/time";
+import { ConversationSummary, Message } from "../types/chat";
+import { deleteConversation, fetchConversationList, fetchConversationMessages, postChatOnce, summarizeConversation } from "../api/chatApi";
+import { SidebarConversationItem } from "../components/SidebarConversationItem";
+import { ChatBubble } from "../components/ChatBubble";
+import { Composer } from "../components/Composer";
+import { useTheme } from "../hooks/useTheme";
+import { useAuth } from "../hooks/useAuth";
+import cn from "../utils/cn";
+import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
+import { Loader } from "../components/ui/Loader";
+import { AppLogo } from "../components/ui/AppLogo";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -26,7 +26,6 @@ export default function ChatApp() {
   const [isLoadingConversationHistory, setIsLoadingConversationHistory] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [streaming] = useState(false); // streaming disabled for this backend
   const { theme, toggle } = useTheme();
 
   const [currentConversationId, setCurrentConversationId] = useLocalStorage<string | null>(LS_KEYS.currentId, null);
@@ -41,13 +40,12 @@ export default function ChatApp() {
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages.length, streaming]);
+  }, [messages.length]);
 
   useEffect(() => {
     let cancelled = false;
     async function refreshData() {
-      if (currentConversationId) {
-      } else if (userId) {
+      if (userId) {
         if (!cancelled) setIsLoadingConversations(true);
         try {
           const items = await fetchConversationList(userId);
@@ -99,8 +97,7 @@ export default function ChatApp() {
     setIsLoading(true);
     try {
       const { conversationId, messages: fullMessages } = await postChatOnce(payload);
-      // if (!currentConversationId && conversationId) setCurrentConversationId(conversationId);
-      if(currentConversationId===conversationId){
+      if (currentConversationId === conversationId) {
         setMessages(fullMessages);
       }
 
@@ -138,7 +135,7 @@ export default function ChatApp() {
       handleNewChat();
     }
     try {
-        await deleteConversation(id);
+      await deleteConversation(id);
     } catch (err) {
       console.error(err);
     }
@@ -187,7 +184,7 @@ export default function ChatApp() {
       isCollapsed ? "w-14" : "w-80"
     )}>
       {isCollapsed ? (
-        <div className={cn("flex flex-col items-center p-2 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
+        <div className={cn("flex flex-col items-center p-2 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10")}>
           <IconButton onClick={handleNewChat} label="New chat" className="w-10 h-10 flex items-center justify-center bg-[#10a37f] text-white hover:bg-[#0e8e6f]">
             <Plus size={16} />
           </IconButton>
@@ -196,7 +193,7 @@ export default function ChatApp() {
           </IconButton>
         </div>
       ) : (
-        <div className={cn("flex items-center justify-between p-3 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
+        <div className={cn("flex items-center justify-between p-3 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10")}>
           <Button onClick={handleNewChat} size="md" variant="primary">
             <Plus size={16} /> New chat
           </Button>
@@ -214,7 +211,7 @@ export default function ChatApp() {
       {!isCollapsed && (
         <div className="px-3 py-2 text-xs uppercase tracking-wide text-gray-500 dark:text-white/40">Conversations</div>
       )}
-      <div className={cn("flex-1 overflow-auto p-2 space-y-1", isCollapsed && "hidden") }>
+      <div className={cn("flex-1 overflow-auto p-2 space-y-1", isCollapsed && "hidden")}>
         {isLoadingConversations && !isCollapsed && (
           <div className="px-2 py-2">
             <Loader label="Loading conversations…" className={cn(theme === "dark" ? "text-white/60" : "text-gray-600")} />
@@ -236,9 +233,9 @@ export default function ChatApp() {
       </div>
 
       {!isCollapsed && (
-        <div className={cn("p-3 border-t text-sm flex items-center justify-between", theme === "dark" ? "border-white/5 text-white/60" : "border-black/10 text-gray-600") }>
+        <div className={cn("p-3 border-t text-sm flex items-center justify-between", theme === "dark" ? "border-white/5 text-white/60" : "border-black/10 text-gray-600")}>
           <div className="flex items-center gap-2">
-            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", theme === "dark" ? "bg-white/10 text-white/70" : "bg-black/5 text-gray-700") }>
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", theme === "dark" ? "bg-white/10 text-white/70" : "bg-black/5 text-gray-700")}>
               <User size={14} />
             </div>
             {userId ? (displayName ? displayName : `User: ${userId}`) : "Anonymous"}
@@ -254,10 +251,10 @@ export default function ChatApp() {
   );
 
   return (
-    <div className={cn("h-screen w-screen flex", theme === "dark" ? "bg-[#212329] text-white" : "bg-white text-gray-900") }>
+    <div className={cn("h-screen w-screen flex", theme === "dark" ? "bg-[#212329] text-white" : "bg-white text-gray-900")}>
       <div className="hidden md:block">{renderSidebar(collapsed)}</div>
       <div className="flex-1 flex flex-col">
-        <div className={cn("h-12 border-b flex items-center px-4 gap-3", theme === "dark" ? "border-white/5" : "border-black/10") }>
+        <div className={cn("h-12 border-b flex items-center px-4 gap-3", theme === "dark" ? "border-white/5" : "border-black/10")}>
           <IconButton onClick={() => setMobileSidebarOpen(true)} label="Open menu" className="md:hidden">
             <Menu size={18} />
           </IconButton>
@@ -285,7 +282,7 @@ export default function ChatApp() {
               </div>
             </div>
           ) : (
-           isLoadingConversationHistory ? <Loader label="Loading Converstion..." className="flex items-center justify-center h-full w-full"/> :  <div className="">
+            isLoadingConversationHistory ? <Loader label="Loading Converstion..." className="flex items-center justify-center h-full w-full" /> : <div className="">
               {messages.map((m) => (
                 <ChatBubble key={m.id} message={m} />
               ))}
@@ -326,7 +323,7 @@ export default function ChatApp() {
         )}
       </div>
       {/* Mobile sidebar overlay */}
-      <div className={cn("fixed inset-0 z-40 md:hidden", mobileSidebarOpen ? "block" : "hidden") }>
+      <div className={cn("fixed inset-0 z-40 md:hidden", mobileSidebarOpen ? "block" : "hidden")}>
         <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
         <div className="absolute inset-y-0 left-0">
           {renderSidebar(false)}
