@@ -36,15 +36,14 @@ export function Composer(props: { disabled?: boolean; onSend: (text: string) => 
             rows={3}
             disabled={disabled}
           />
-          <div className="flex items-center justify-between px-3 pb-3">
-            <div className="text-xs text-gray-500 dark:text-white/40">Press Enter to send</div>
+          <div className="flex items-center justify-end px-3 pb-3">
             <Button
               onClick={handleSend}
               disabled={disabled || text.trim().length === 0}
               variant="primary"
               size="md"
             >
-              <Send size={16} /> Send
+              <Send size={16} />
             </Button>
           </div>
         </div>
