@@ -17,6 +17,14 @@ export function getFromLocalStorage<T>(key: string, fallback: T): T {
 
 export function setInLocalStorage<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    const next = JSON.stringify(value);
+    const prev = localStorage.getItem(key);
+    if (prev !== next) {
+      localStorage.setItem(key, next);
+      try {
+        const event = new CustomEvent('local-storage', { detail: { key } });
+        window.dispatchEvent(event);
+      } catch {}
+    }
   } catch {}
 }

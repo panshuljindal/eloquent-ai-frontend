@@ -56,7 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
     setGuest(true);
     setSummaries([]);
-  }, [setUserId, setGuest, setProfile, setSummaries]);
+    setCurrentConversationId(null);
+  }, [setUserId, setGuest, setProfile, setSummaries, setCurrentConversationId]);
 
   const logout = useCallback(() => {
     setUserId(null);
