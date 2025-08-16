@@ -42,7 +42,7 @@ export function ChatBubble({ message }: { message: Message }) {
                     <strong {...props} className="font-semibold" />
                   ),
                   a: ({ node, ...props }) => (
-                    <a {...props} target="_blank" rel="noreferrer">{props.children}</a>
+                    <a {...props} target="_blank" rel="noopener noreferrer nofollow">{props.children}</a>
                   ),
                   code: ({ node, inline, className, children, ...props }: any) => (
                     <code

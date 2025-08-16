@@ -12,29 +12,12 @@ function extractMessage(json: any, fallback: string): string {
   return json?.data?.message ?? json?.message ?? fallback;
 }
 
-export async function meApi(): Promise<{ userId: string; name?: string } | null> {
-  try {
-    const res = await fetch(`${API_BASE}/me`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-    });
-    let json: AuthResponse | undefined;
-    try { json = (await res.json()) as AuthResponse; } catch {}
-    if (!res.ok) return null;
-    const { id, name } = json ? extractUser(json) : { id: undefined, name: undefined };
-    if (!id) return null;
-    return { userId: id, name };
-  } catch {
-    return null;
-  }
-}
-
 export async function signupApi(payload: { email: string; password: string; name?: string }): Promise<{ userId: string; name?: string }> {
   const res = await fetch(`${API_BASE}/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+    credentials: 'include',
   });
   let json: AuthResponse | undefined;
   try {
@@ -54,6 +37,7 @@ export async function loginApi(payload: { email: string; password: string }): Pr
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+    credentials: 'include',
   });
   let json: AuthResponse | undefined;
   try {
