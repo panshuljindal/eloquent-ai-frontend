@@ -4,7 +4,7 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import { LS_KEYS } from "../utils/storage";
 import { timeAgo } from "../utils/time";
 import { ConversationSummary, Message } from "../types/chat";
-import { deleteConversation, fetchConversationList, fetchConversationMessages, postChatOnce, summarizeConversation } from "../api/chatApi";
+import { deleteConversation, fetchConversationList, fetchConversationMessages, summarizeConversation, streamChatSSE, streamChatWebSocket } from "../api/chatApi";
 import { SidebarConversationItem } from "../components/SidebarConversationItem";
 import { ChatBubble } from "../components/ChatBubble";
 import { Composer } from "../components/Composer";
@@ -18,14 +18,12 @@ import { AppLogo } from "../components/ui/AppLogo";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-// using shared cn utility
-
 export default function ChatApp() {
   const [collapsed, setCollapsed] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingConversationHistory, setIsLoadingConversationHistory] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const { theme, toggle } = useTheme();
 
   const [currentConversationId, setCurrentConversationId] = useLocalStorage<string | null>(LS_KEYS.currentId, null);
@@ -39,8 +37,10 @@ export default function ChatApp() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages.length]);
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,14 +94,42 @@ export default function ChatApp() {
 
     const payload = { conversation_id: currentConversationId, message: text, user_id: userId } as { conversation_id: string | null; message: string; user_id?: string | null };
 
-    setIsLoading(true);
     try {
-      const { conversationId, messages: fullMessages } = await postChatOnce(payload);
+      const assistantId = `assist-${crypto.randomUUID()}`;
+      setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '', isStreaming: true } as Message]);
+
+      let streamed = '';
+      let conversationId: string;
+      let finalMessages: Message[];
+      try {
+        const wsResult = await streamChatWebSocket({
+          conversationId: currentConversationId,
+          message: text,
+          onDelta: (delta) => {
+            streamed += delta;
+            setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: streamed, isStreaming: true } : m));
+          },
+        });
+        conversationId = wsResult.conversationId;
+        finalMessages = wsResult.messages;
+      } catch (wsErr) {
+        const sseResult = await streamChatSSE(payload, (delta) => {
+          streamed += delta;
+          setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: streamed, isStreaming: true } : m));
+        });
+        conversationId = sseResult.conversationId;
+        finalMessages = sseResult.messages;
+      }
+
       if (!currentConversationId && conversationId) {
         setCurrentConversationId(conversationId);
       }
-      setMessages(fullMessages);
 
+      if (finalMessages && finalMessages.length > 0) {
+        setMessages(finalMessages);
+      } else {
+        setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, isStreaming: false } : m));
+      }
 
       const summarize = (msgs: Message[]): ConversationSummary => {
         const firstUser = msgs.find((m) => m.role === "user");
@@ -115,19 +143,18 @@ export default function ChatApp() {
         };
       };
       if (conversationId) {
-        const next = summarize(fullMessages);
+        const next = summarize(finalMessages);
         setConversationSummaries((prev) => {
           const rest = prev.filter((c) => c.id !== next.id);
           return [next, ...rest];
         });
       }
     } catch (err) {
+      console.log("ERROR", err);
       setMessages((prev) => [
         ...prev,
         { id: `err-${crypto.randomUUID()}`, role: "assistant", content: "Sorry, something went wrong while getting the response." },
       ]);
-    } finally {
-      setIsLoading(false);
     }
   }
 

@@ -5,8 +5,16 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import cn from '../utils/cn';
 
+function normalizeStreamingMarkdown(text: string): string {
+  let t = text.replace(/\r\n/g, '\n');
+  t = t.replace(/^(\s*)\d+\.\s/gm, '$1- ');
+  if (!t.endsWith('\n')) t += '\n';
+  return t;
+}
+
 export function ChatBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
+  const content = message.isStreaming ? normalizeStreamingMarkdown(message.content) : message.content;
   return (
     <div className={cn('w-full')}>
       <div className="max-w-3xl mx-auto px-4 py-5">
@@ -61,7 +69,7 @@ export function ChatBubble({ message }: { message: Message }) {
                   ),
                 }}
               >
-                {message.content}
+                {content}
               </ReactMarkdown>
             </div>
           </div>
