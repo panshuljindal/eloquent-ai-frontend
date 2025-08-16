@@ -17,6 +17,8 @@ import { Loader } from "../components/ui/Loader";
 import { AppLogo } from "../components/ui/AppLogo";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { buildConversationSummary } from '../utils/chat';
+import { SummaryModal } from '../components/SummaryModal';
 
 export default function ChatApp() {
   const [collapsed, setCollapsed] = useState(false);
@@ -131,19 +133,8 @@ export default function ChatApp() {
         setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, isStreaming: false } : m));
       }
 
-      const summarize = (msgs: Message[]): ConversationSummary => {
-        const firstUser = msgs.find((m) => m.role === "user");
-        const lastAssistant = [...msgs].reverse().find((m) => m.role === "assistant") ?? msgs[msgs.length - 1];
-        const clamp = (s: string, n: number) => (s.replace(/\s+/g, " ").trim().slice(0, n) + (s.length > n ? "…" : ""));
-        return {
-          id: String(conversationId),
-          title: clamp(firstUser?.content || "New chat", 60),
-          last_message_preview: lastAssistant ? clamp(lastAssistant.content, 80) : undefined,
-          created_at: msgs[0]?.createdAt || new Date().toISOString(),
-        };
-      };
       if (conversationId) {
-        const next = summarize(finalMessages);
+        const next = buildConversationSummary(finalMessages, conversationId);
         setConversationSummaries((prev) => {
           const rest = prev.filter((c) => c.id !== next.id);
           return [next, ...rest];
@@ -320,33 +311,15 @@ export default function ChatApp() {
         </div>
 
         <Composer disabled={isLoading} onSend={handleSend} />
-        {summaryModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setSummaryModalOpen(false)} />
-            <div className={cn("relative z-10 max-w-2xl w-[92%] rounded-2xl border p-4", theme === 'dark' ? 'bg-[#2a2b32] border-white/10 text-white' : 'bg-white border-black/10 text-gray-900')} role="dialog" aria-modal="true" aria-labelledby="summary-title">
-              <div className="flex items-center justify-between mb-2">
-                <div id="summary-title" className="font-semibold text-base">Conversation Summary</div>
-                <div className="flex items-center gap-1">
-                  <Button onClick={handleCopySummary} size="sm" variant="neutral" disabled={!summaryText || isSummarizing}>
-                    <Copy size={14} /> {copied ? 'Copied' : ''}
-                  </Button>
-                </div>
-              </div>
-              <div className={cn("prose max-w-none prose-slate text-[15px] min-h-[60px]", theme === 'dark' ? 'dark:prose-invert' : '')}>
-                {isSummarizing ? (
-                  <Loader label="Summarizing…" className={cn(theme === 'dark' ? 'text-white/70' : 'text-gray-600')} />
-                ) : summaryText ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryText}</ReactMarkdown>
-                ) : (
-                  'No summary available.'
-                )}
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Button onClick={() => setSummaryModalOpen(false)} size="md" variant="primary">Close</Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <SummaryModal
+          open={summaryModalOpen}
+          text={summaryText}
+          isLoading={isSummarizing}
+          onClose={() => setSummaryModalOpen(false)}
+          onCopy={handleCopySummary}
+          theme={theme === 'dark' ? 'dark' : 'light'}
+          copied={copied}
+        />
       </div>
       {/* Mobile sidebar overlay */}
       <div className={cn("fixed inset-0 z-40 md:hidden", mobileSidebarOpen ? "block" : "hidden")}>
