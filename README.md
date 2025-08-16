@@ -1,87 +1,83 @@
-# Eloquent Frontend — Local Development
+# Eloquent AI — Frontend
 
-Run the React app locally in a few steps. This project uses React + TypeScript, TailwindCSS, and a small set of reusable UI primitives for consistency and code quality.
+Modern React + TypeScript chat UI with dark mode, Markdown rendering, and simple authentication. Built with TailwindCSS and small reusable UI primitives.
 
-## Requirements
-- Node.js 18+ (recommended) and npm 9+
-- Backend API available (default: `http://localhost:8000`)
+## Quick start
 
-## Install
+1) Requirements
+- Node.js 18+ and npm 9+
+- A running backend API
+
+2) Install
 ```bash
 npm ci
 ```
 
-## Start (development)
+3) Configure environment
+- Create a `.env` in the project root and set your API base URL:
+```bash
+REACT_APP_API_BASE=http://localhost:5000
+```
+- The app derives endpoints from this base, e.g. `AUTH_API_BASE = ${REACT_APP_API_BASE}/api/auth`, `CHAT_API_BASE = ${REACT_APP_API_BASE}/api/chat` (see `src/config/env.ts`).
+
+4) Start the dev server
 ```bash
 npm start
 ```
 - App: `http://localhost:3000`
-- Hot reload enabled
 
-## Build (production)
+5) Build for production
 ```bash
 npm run build
 ```
-- Output written to `build/`
+- Output in `build/`
 
-## Environment / API configuration
-Endpoints are derived from a single base URL. By default the app targets `http://localhost:8000`.
+## Features
+- Chat interface with conversation list, message history, and one-shot send
+- Markdown rendering with GFM and syntax highlighting
+- Light/dark theme with no flash on load
+- Basic auth: login, signup, and guest mode
+- Conversation actions: summarize, delete
 
-- Configure via `.env` (create at the project root):
-```bash
-REACT_APP_API_BASE=http://localhost:8000
-```
-- See `src/config/env.ts` for how URLs are formed:
-  - `CHAT_API_BASE = ${REACT_APP_API_BASE}/api/chat`
-  - `AUTH_API_BASE = ${REACT_APP_API_BASE}/api/auth`
+## Theming (no flash dark mode)
+- The theme is persisted in `localStorage` and applied pre-hydration.
+- An inline script in `public/index.html` sets the `dark` class before first paint to prevent white flash.
+- See `src/hooks/useTheme.ts` for the theme hook (uses `useLayoutEffect` to toggle classes before paint).
 
-## Project structure (high-level)
+## Project structure
 ```
 src/
-  api/            # Typed API clients
+  api/            # API clients (auth, chat)
   components/
-    ui/           # Reusable UI primitives (Button, IconButton, Input, Textarea, Card, Loader)
-    auth/         # Auth-specific components
-  context/        # React context (auth)
-  hooks/          # Reusable hooks
-  pages/          # Route-level components
+    auth/         # Auth UI (forms)
+    ui/           # UI primitives (Button, IconButton, Input, Textarea, Card, Loader)
+  context/        # React contexts (auth)
+  hooks/          # Custom hooks (theme, auth, localStorage)
+  pages/          # Route-level pages (AuthPage)
   types/          # Shared TypeScript types
-  utils/          # Utilities (storage, time, cn)
+  utils/          # Utilities (cn, storage, time)
 ```
 
-## Reusable UI primitives
-- `Button`: variants `primary | ghost | destructive | neutral`, sizes `sm | md | lg | icon`.
-- `IconButton`: compact button for icons/actions.
-- `Input`, `Textarea`: consistent form fields.
-- `Card`: surface container with theming-aware styles.
-- `Loader`: spinner + optional label.
-
-Examples:
-```tsx
-import { Button } from './src/components/ui/Button';
-import { Input } from './src/components/ui/Input';
-
-<Button variant="primary" size="md">Save</Button>
-<Input type="email" placeholder="you@example.com" />
-```
-
-## Code quality guidelines
-- TypeScript-first: explicit prop types and return types for exported components.
-- Naming: prefer descriptive, intention-revealing names (e.g., `currentConversationId`, `conversationSummaries`).
-- UI consistency: use primitives from `components/ui` instead of ad-hoc buttons/inputs.
-- Hooks: follow the Rules of Hooks; keep effects minimal and list all dependencies.
-- Accessibility: label icon buttons (`title`/`aria-label`), ensure anchors have accessible content.
-- Theming: use `useTheme` and conditional classes via `utils/cn` for light/dark variations.
-- Error handling: surface user-friendly messages; avoid swallowing errors silently.
+## Environment & API
+- Configure `REACT_APP_API_BASE` to point at your backend (prefer HTTPS in production).
+- Endpoints used by the app:
+  - Auth: `/api/auth/signup`, `/api/auth/login`, `/api/auth/me`, `/api/auth/logout` (optional on backend)
+  - Chat: `/api/chat/conversations`, `/api/chat/messages/:id`, `/api/chat/create`, `/api/chat/delete/:id`, `/api/chat/summarize/:id`
+- If using cookie-based auth, ensure your backend CORS allows credentials and set cookies with `SameSite=None; Secure`.
 
 ## Scripts
 ```bash
-npm start   # dev server
-npm run build   # production build
-npm test   # CRA test runner
+npm start        # start dev server
+npm run build    # production build
+npm test         # test runner (CRA)
 ```
 
+## Security notes
+- Markdown: raw HTML is not rendered; links open with `rel="noopener noreferrer nofollow"`.
+- Theme: class toggling before paint avoids visual flashes.
+- CORS/cookies: if you rely on cookies, configure your backend accordingly.
+
 ## Troubleshooting
-- Backend not running → login/chat will fail. Start your API and/or set `REACT_APP_API_BASE`.
-- CORS errors → enable CORS in your backend for `http://localhost:3000`.
-- Port in use → `PORT=3001 npm start`.
+- API not reachable → set `REACT_APP_API_BASE` or start backend
+- CORS errors → allow `http://localhost:3000` on the backend (and credentials if needed)
+- Dev server port in use → `PORT=3001 npm start`
