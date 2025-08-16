@@ -3,8 +3,8 @@ import { AuthCard } from './AuthCard';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 
-export function SignupForm(props: { onSubmit: (name: string, email: string, password: string) => Promise<void>; onSwitch: () => void }) {
-  const { onSubmit, onSwitch } = props;
+export function SignupForm(props: { onSubmit: (name: string, email: string, password: string) => Promise<void>; onSwitch: () => void; onGuest?: () => void }) {
+  const { onSubmit, onSwitch, onGuest } = props;
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -69,6 +69,11 @@ export function SignupForm(props: { onSubmit: (name: string, email: string, pass
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Creating…' : 'Create account'}
         </Button>
+        {onGuest && (
+          <Button type="button" variant="neutral" onClick={onGuest} className="w-full">
+            Continue as guest
+          </Button>
+        )}
       </form>
       <div className="mt-4 text-sm">
         Already have an account?{' '}<button onClick={onSwitch} className="text-[#0e8e6f] hover:underline">Sign in</button>

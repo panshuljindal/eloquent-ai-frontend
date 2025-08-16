@@ -1,6 +1,31 @@
-export function timeAgo(iso?: string) {
-  if (!iso) return "";
-  const d = new Date(iso);
+function coerceToUtcIsoString(input: string): string {
+  let s = input.trim();
+  if (!s) return s;
+  if (s.includes(' ') && !s.includes('T')) {
+    s = s.replace(' ', 'T');
+  }
+  const hasTimezone = /Z$/i.test(s) || /[+-]\d{2}:?\d{2}$/.test(s);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    // Date only → assume midnight UTC
+    return `${s}T00:00:00Z`;
+  }
+  if (!hasTimezone) {
+    // Assume provided timestamp is UTC if no timezone present
+    return `${s}Z`;
+  }
+  return s;
+}
+
+export function parseUtcDate(iso?: string): Date | null {
+  if (!iso) return null;
+  const normalized = coerceToUtcIsoString(iso);
+  const d = new Date(normalized);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function timeAgo(iso?: string): string {
+  const d = parseUtcDate(iso);
+  if (!d) return "";
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";

@@ -13,15 +13,13 @@ export default function AuthPage() {
   return (
     <div className={theme === 'dark' ? 'min-h-screen bg-[#212329] text-white' : 'min-h-screen bg-white text-gray-900'}>
       <div className="container mx-auto px-4">
-        <div className="pt-10 text-center">
-          <Button onClick={loginAsGuest} variant="neutral" size="sm">Continue as guest</Button>
-        </div>
         {mode === 'login' ? (
           <LoginForm
             onSubmit={async (email, password) => {
               await login(email, password);
             }}
             onSwitch={() => setMode('signup')}
+            onGuest={loginAsGuest}
           />
         ) : (
           <SignupForm
@@ -29,6 +27,7 @@ export default function AuthPage() {
               await signup(name, email, password);
             }}
             onSwitch={() => setMode('login')}
+            onGuest={loginAsGuest}
           />
         )}
       </div>

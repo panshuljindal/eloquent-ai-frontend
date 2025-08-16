@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, LogIn, LogOut, ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Moon, Sun, User, Menu, X, Wrench } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { LS_KEYS } from "./utils/storage";
 import { timeAgo } from "./utils/time";
@@ -14,11 +14,14 @@ import cn from "./utils/cn";
 import { Button } from "./components/ui/Button";
 import { IconButton } from "./components/ui/IconButton";
 import { Loader } from "./components/ui/Loader";
+import { AppLogo } from "./components/ui/AppLogo";
 
 // using shared cn utility
 
 export default function ChatApp() {
   const [collapsed, setCollapsed] = useState(false);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [streaming] = useState(false); // streaming disabled for this backend
   const { theme, toggle } = useTheme();
@@ -47,11 +50,14 @@ export default function ChatApp() {
           if (!cancelled) setIsLoading(false);
         }
       } else if (userId) {
+        if (!cancelled) setIsLoadingConversations(true);
         try {
           const items = await fetchConversationList(userId);
           if (!cancelled) setConversationSummaries(items);
         } catch (err) {
           console.warn("Could not load conversation list:", err);
+        } finally {
+          if (!cancelled) setIsLoadingConversations(false);
         }
       }
     }
@@ -72,11 +78,14 @@ export default function ChatApp() {
     } finally {
       setIsLoading(false);
     }
+    // Close mobile sidebar after navigation
+    setMobileSidebarOpen(false);
   }
 
   function handleNewChat() {
     setCurrentConversationId(null);
     setMessages([]);
+    setMobileSidebarOpen(false);
   }
 
   async function handleSend(text: string) {
@@ -136,18 +145,18 @@ export default function ChatApp() {
     }
   }
 
-  const sidebar = (
+  const renderSidebar = (isCollapsed: boolean) => (
     <div className={cn(
       "h-full flex flex-col transition-all overflow-hidden",
       theme === "dark" ? "bg-[#17181c] border-r border-white/5" : "bg-gray-50 border-r border-black/10",
-      collapsed ? "w-14" : "w-80"
+      isCollapsed ? "w-14" : "w-80"
     )}>
-      {collapsed ? (
+      {isCollapsed ? (
         <div className={cn("flex flex-col items-center p-2 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
           <IconButton onClick={handleNewChat} label="New chat" className="w-10 h-10 flex items-center justify-center bg-[#10a37f] text-white hover:bg-[#0e8e6f]">
             <Plus size={16} />
           </IconButton>
-          <IconButton onClick={() => setCollapsed(false)} label="Expand">
+          <IconButton onClick={() => setCollapsed(false)} label="Expand" className="hidden md:inline-flex">
             <ChevronRight size={18} />
           </IconButton>
         </div>
@@ -156,35 +165,54 @@ export default function ChatApp() {
           <Button onClick={handleNewChat} size="md" variant="primary">
             <Plus size={16} /> New chat
           </Button>
-          <IconButton onClick={() => setCollapsed(true)} label="Collapse">
-            <ChevronLeft size={18} />
-          </IconButton>
+          <div className="flex items-center gap-1">
+            <IconButton onClick={() => setMobileSidebarOpen(false)} label="Close" className="md:hidden">
+              <X size={18} />
+            </IconButton>
+            <IconButton onClick={() => setCollapsed(true)} label="Collapse" className="hidden md:inline-flex">
+              <ChevronLeft size={18} />
+            </IconButton>
+          </div>
         </div>
       )}
 
-      {!collapsed && (
+      {!isCollapsed && (
         <div className="px-3 py-2 text-xs uppercase tracking-wide text-gray-500 dark:text-white/40">Conversations</div>
       )}
-      <div className={cn("flex-1 overflow-auto p-2 space-y-1", collapsed && "hidden") }>
-        {conversationSummaries.length === 0 && !collapsed && (
-          <div className="text-xs text-gray-500 dark:text-white/40 px-2">No conversations yet.</div>
+      <div className={cn("flex-1 overflow-auto p-2 space-y-1", isCollapsed && "hidden") }>
+        {isLoadingConversations && !isCollapsed && (
+          <div className="px-2 py-2">
+            <Loader label="Loading conversations…" className={cn(theme === "dark" ? "text-white/60" : "text-gray-600")} />
+          </div>
         )}
-        {!collapsed && conversationSummaries.map((c) => (
+        {!isLoadingConversations && conversationSummaries.length === 0 && !isCollapsed && (
+          <div className="text-xs text-center text-gray-500 dark:text-white/40 px-2 py-2">No conversations yet.</div>
+        )}
+        {!isCollapsed && conversationSummaries.map((c) => (
           <SidebarConversationItem
             key={c.id}
             active={c.id === currentConversationId}
             title={c.title}
             subtitle={c.last_message_preview ? `${c.last_message_preview} • ${timeAgo(c.created_at)}` : timeAgo(c.created_at)}
             onClick={() => handleSelectConversation(c.id)}
-            onDelete={!collapsed ? () => handleDeleteSummary(c.id) : undefined}
+            onDelete={!isCollapsed ? () => handleDeleteSummary(c.id) : undefined}
           />
         ))}
       </div>
 
-      {!collapsed && (
+      {!isCollapsed && (
         <div className={cn("p-3 border-t text-sm flex items-center justify-between", theme === "dark" ? "border-white/5 text-white/60" : "border-black/10 text-gray-600") }>
-          <div className="flex items-center gap-2"><LogIn size={16} /> {userId ? (displayName ? displayName : `User: ${userId}`) : "Anonymous"}</div>
-          <IconButton onClick={logout} label="Logout"><LogOut size={16} /></IconButton>
+          <div className="flex items-center gap-2">
+            <div className={cn("w-7 h-7 rounded-full flex items-center justify-center", theme === "dark" ? "bg-white/10 text-white/70" : "bg-black/5 text-gray-700") }>
+              <User size={14} />
+            </div>
+            {userId ? (displayName ? displayName : `User: ${userId}`) : "Anonymous"}
+          </div>
+          {userId ? (
+            <Button onClick={logout} size="sm" variant="neutral">Logout</Button>
+          ) : (
+            <Button onClick={logout} size="sm" variant="neutral">Login</Button>
+          )}
         </div>
       )}
     </div>
@@ -192,18 +220,25 @@ export default function ChatApp() {
 
   return (
     <div className={cn("h-screen w-screen flex", theme === "dark" ? "bg-[#212329] text-white" : "bg-white text-gray-900") }>
-      {sidebar}
+      <div className="hidden md:block">{renderSidebar(collapsed)}</div>
       <div className="flex-1 flex flex-col">
         <div className={cn("h-12 border-b flex items-center px-4 gap-3", theme === "dark" ? "border-white/5" : "border-black/10") }>
-          <div className="h-6 w-6 rounded bg-[#10a37f]" />
+          <IconButton onClick={() => setMobileSidebarOpen(true)} label="Open menu" className="md:hidden">
+            <Menu size={18} />
+          </IconButton>
+          <AppLogo size={24} />
           <div className="font-medium">Eloquent Operator</div>
           <div className="flex-1" />
+          {/* Conversation list loading indicator */}
+          {isLoadingConversations && (
+            <Loader className={cn(theme === 'dark' ? 'text-white/70' : 'text-gray-600')} size={14} label="Syncing" />
+          )}
+          <IconButton onClick={() => alert('Tools coming soon')} label="Tools">
+            <Wrench size={16} />
+          </IconButton>
           <IconButton onClick={toggle} label={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </IconButton>
-          {currentConversationId && (
-            <div className="text-xs text-gray-600 dark:text-white/50">Conversation: {currentConversationId}</div>
-          )}
         </div>
 
         <div ref={scrollRef} className="flex-1 overflow-auto">
@@ -211,7 +246,7 @@ export default function ChatApp() {
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
                 <div className="text-3xl font-semibold mb-2">How can I help today?</div>
-                <div className="text-white/60">Ask anything. Your first message will start a new conversation.</div>
+                <div className={cn(theme === "dark" ? "text-white/60" : "text-gray-600")}>Ask anything. Your first message will start a new conversation.</div>
               </div>
             </div>
           ) : (
@@ -227,6 +262,13 @@ export default function ChatApp() {
         </div>
 
         <Composer disabled={isLoading} onSend={handleSend} />
+      </div>
+      {/* Mobile sidebar overlay */}
+      <div className={cn("fixed inset-0 z-40 md:hidden", mobileSidebarOpen ? "block" : "hidden") }>
+        <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
+        <div className="absolute inset-y-0 left-0">
+          {renderSidebar(false)}
+        </div>
       </div>
     </div>
   );
