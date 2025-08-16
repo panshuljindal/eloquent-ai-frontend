@@ -96,7 +96,7 @@ export default function ChatApp() {
 
     try {
       const assistantId = `assist-${crypto.randomUUID()}`;
-      setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '', isStreaming: true } as Message]);
+      setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '...', isStreaming: true } as Message]);
 
       let streamed = '';
       let conversationId: string;
