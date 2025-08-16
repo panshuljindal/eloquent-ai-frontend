@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, Loader2, LogIn, LogOut, ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
+import { Plus, LogIn, LogOut, ChevronLeft, ChevronRight, Moon, Sun } from "lucide-react";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { LS_KEYS } from "./utils/storage";
 import { timeAgo } from "./utils/time";
@@ -10,10 +10,12 @@ import { ChatBubble } from "./components/ChatBubble";
 import { Composer } from "./components/Composer";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./hooks/useAuth";
+import cn from "./utils/cn";
+import { Button } from "./components/ui/Button";
+import { IconButton } from "./components/ui/IconButton";
+import { Loader } from "./components/ui/Loader";
 
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
+// using shared cn utility
 
 export default function ChatApp() {
   const [collapsed, setCollapsed] = useState(false);
@@ -33,36 +35,18 @@ export default function ChatApp() {
 
   useEffect(() => {
     let cancelled = false;
-    async function init() {
-      if (currentConversationId === null) {
-        if (userId === null) {
-          return;
-        }
-        try { 
-          const items = await fetchConversationList(userId);
-          if (!cancelled) setConversationSummaries(items);
-        } catch (err) {
-          console.warn("Could not load conversation list:", err);
-        }
-      } else {
+    async function refreshData() {
+      if (currentConversationId) {
+        setIsLoading(true);
         try {
           const history = await fetchConversationMessages(currentConversationId);
           if (!cancelled) setMessages(history);
         } catch (err) {
           console.warn("Could not load messages:", err);
+        } finally {
+          if (!cancelled) setIsLoading(false);
         }
-      }
-    }
-    init();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function maybeFetch() {
-      if (currentConversationId === null && userId !== null) {
+      } else if (userId) {
         try {
           const items = await fetchConversationList(userId);
           if (!cancelled) setConversationSummaries(items);
@@ -71,11 +55,11 @@ export default function ChatApp() {
         }
       }
     }
-    maybeFetch();
+    refreshData();
     return () => {
       cancelled = true;
     };
-  }, [userId, currentConversationId, setConversationSummaries]);
+  }, [currentConversationId, userId, setConversationSummaries]);
 
   async function handleSelectConversation(id: string) {
     setCurrentConversationId(id);
@@ -160,37 +144,21 @@ export default function ChatApp() {
     )}>
       {collapsed ? (
         <div className={cn("flex flex-col items-center p-2 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
-          <button
-            onClick={handleNewChat}
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#10a37f] text-white hover:bg-[#0e8e6f]"
-            title="New chat"
-          >
+          <IconButton onClick={handleNewChat} label="New chat" className="w-10 h-10 flex items-center justify-center bg-[#10a37f] text-white hover:bg-[#0e8e6f]">
             <Plus size={16} />
-          </button>
-          <button
-            onClick={() => setCollapsed(false)}
-            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5"
-            title="Expand"
-          >
+          </IconButton>
+          <IconButton onClick={() => setCollapsed(false)} label="Expand">
             <ChevronRight size={18} />
-          </button>
+          </IconButton>
         </div>
       ) : (
         <div className={cn("flex items-center justify-between p-3 gap-2 border-b", theme === "dark" ? "border-white/5" : "border-black/10") }>
-          <button
-            onClick={handleNewChat}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium bg-[#10a37f] text-white hover:bg-[#0e8e6f]"
-            title="New chat"
-          >
+          <Button onClick={handleNewChat} size="md" variant="primary">
             <Plus size={16} /> New chat
-          </button>
-          <button
-            onClick={() => setCollapsed(true)}
-            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5"
-            title="Collapse"
-          >
+          </Button>
+          <IconButton onClick={() => setCollapsed(true)} label="Collapse">
             <ChevronLeft size={18} />
-          </button>
+          </IconButton>
         </div>
       )}
 
@@ -216,7 +184,7 @@ export default function ChatApp() {
       {!collapsed && (
         <div className={cn("p-3 border-t text-sm flex items-center justify-between", theme === "dark" ? "border-white/5 text-white/60" : "border-black/10 text-gray-600") }>
           <div className="flex items-center gap-2"><LogIn size={16} /> {userId ? (displayName ? displayName : `User: ${userId}`) : "Anonymous"}</div>
-          <button onClick={logout} className="px-2 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5" title="Logout"><LogOut size={16} /></button>
+          <IconButton onClick={logout} label="Logout"><LogOut size={16} /></IconButton>
         </div>
       )}
     </div>
@@ -230,9 +198,9 @@ export default function ChatApp() {
           <div className="h-6 w-6 rounded bg-[#10a37f]" />
           <div className="font-medium">Eloquent Operator</div>
           <div className="flex-1" />
-          <button onClick={toggle} className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10" title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
+          <IconButton onClick={toggle} label={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}>
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          </IconButton>
           {currentConversationId && (
             <div className="text-xs text-gray-600 dark:text-white/50">Conversation: {currentConversationId}</div>
           )}
@@ -252,12 +220,7 @@ export default function ChatApp() {
                 <ChatBubble key={m.id} message={m} />
               ))}
               {isLoading && (
-                <div className={cn(
-                  "max-w-3xl mx-auto px-4 py-5 flex items-center gap-2",
-                  theme === "dark" ? "text-white/60" : "text-gray-600"
-                )}>
-                  <Loader2 className="animate-spin" size={16} /> Generating...
-                </div>
+                <Loader label="Generating..." className={cn("max-w-3xl mx-auto px-4 py-5", theme === "dark" ? "text-white/60" : "text-gray-600")} />
               )}
             </div>
           )}

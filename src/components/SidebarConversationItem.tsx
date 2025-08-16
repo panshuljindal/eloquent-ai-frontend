@@ -1,9 +1,7 @@
 import React from 'react';
 import { MessageSquareText, Trash2 } from 'lucide-react';
-
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
+import cn from '../utils/cn';
+import { IconButton } from './ui/IconButton';
 
 export function SidebarConversationItem(props: {
   active?: boolean;
@@ -33,17 +31,16 @@ export function SidebarConversationItem(props: {
           )}
         </div>
         {onDelete && (
-          <button
+          <IconButton
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-black/5 dark:hover:bg-white/5"
-            aria-label="Delete conversation"
-            title="Delete"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            label="Delete conversation"
           >
             <Trash2 size={14} />
-          </button>
+          </IconButton>
         )}
       </div>
     </div>

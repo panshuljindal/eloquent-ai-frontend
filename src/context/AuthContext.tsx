@@ -21,8 +21,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useLocalStorage<string | null>(LS_KEYS.userId, null);
   const [guest, setGuest] = useLocalStorage<boolean>(LS_KEYS.guest, false);
   const [profile, setProfile] = useLocalStorage<{ name?: string } | null>(LS_KEYS.profile, null);
-  const [_, setSummaries] = useLocalStorage<ConversationSummary[]>(LS_KEYS.summaries, []);
-  const [currentConversationId, setCurrentConversationId] = useLocalStorage<string | null>(LS_KEYS.currentId, null);
+  const [, setSummaries] = useLocalStorage<ConversationSummary[]>(LS_KEYS.summaries, []);
+  const [, setCurrentConversationId] = useLocalStorage<string | null>(LS_KEYS.currentId, null);
   const login = useCallback(async (email: string, password: string) => {
     const { userId: id, name } = await loginApi({ email, password });
     setUserId(id);

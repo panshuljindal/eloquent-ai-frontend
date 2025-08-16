@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { AuthCard } from './AuthCard';
+import { Input } from '../ui/Input';
+import { Button } from '../ui/Button';
 
 export function SignupForm(props: { onSubmit: (name: string, email: string, password: string) => Promise<void>; onSwitch: () => void }) {
   const { onSubmit, onSwitch } = props;
@@ -34,46 +36,42 @@ export function SignupForm(props: { onSubmit: (name: string, email: string, pass
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm mb-1 text-gray-700 dark:text-white/80">Name</label>
-          <input
+          <Input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1f2024] px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
             placeholder="Jane Doe"
             autoComplete="name"
           />
         </div>
         <div>
           <label className="block text-sm mb-1 text-gray-700 dark:text-white/80">Email</label>
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1f2024] px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
             placeholder="you@example.com"
             autoComplete="email"
           />
         </div>
         <div>
           <label className="block text-sm mb-1 text-gray-700 dark:text-white/80">Password</label>
-          <input
+          <Input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-[#1f2024] px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#10a37f]"
             placeholder="••••••••"
             autoComplete="new-password"
           />
         </div>
         {error && <div className="text-sm text-red-600 dark:text-red-400">{error}</div>}
         {success && <div className="text-sm text-emerald-600 dark:text-emerald-400">{success}</div>}
-        <button type="submit" disabled={loading} className="w-full rounded-lg bg-[#10a37f] hover:bg-[#0e8e6f] text-white py-2 font-medium disabled:opacity-50">
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Creating…' : 'Create account'}
-        </button>
+        </Button>
       </form>
       <div className="mt-4 text-sm">
-        Already have an account?{' '}
-        <button onClick={onSwitch} className="text-[#0e8e6f] hover:underline">Sign in</button>
+        Already have an account?{' '}<button onClick={onSwitch} className="text-[#0e8e6f] hover:underline">Sign in</button>
       </div>
     </AuthCard>
   );

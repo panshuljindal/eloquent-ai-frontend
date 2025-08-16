@@ -3,14 +3,10 @@ import { Message } from '../types/chat';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-
-function cn(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ');
-}
+import cn from '../utils/cn';
 
 export function ChatBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
-  console.log(message);
   return (
     <div className={cn('w-full', isUser ? '' : 'bg-gray-100 dark:bg-[#2a2b32] border border-black/5 dark:border-white/5')}>
       <div className="max-w-3xl mx-auto px-4 py-5">
@@ -38,7 +34,7 @@ export function ChatBubble({ message }: { message: Message }) {
                   <strong {...props} className="font-semibold" />
                 ),
                 a: ({ node, ...props }) => (
-                  <a {...props} target="_blank" rel="noreferrer" />
+                  <a {...props} target="_blank" rel="noreferrer">{props.children}</a>
                 ),
                 code: ({ node, inline, className, children, ...props }: any) => (
                   <code
