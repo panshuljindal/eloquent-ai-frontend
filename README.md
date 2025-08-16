@@ -1,6 +1,6 @@
 # Eloquent AI — Frontend
 
-Modern React + TypeScript chat UI with dark mode, Markdown rendering, and simple authentication. Built with TailwindCSS and small reusable UI primitives.
+Modern React + TypeScript chat UI with dark mode, Markdown rendering, streaming responses, and token-based authentication. Built with TailwindCSS and small reusable UI primitives.
 
 ## Quick start
 
@@ -14,11 +14,12 @@ npm ci
 ```
 
 3) Configure environment
-- Create a `.env` in the project root and set your API base URL:
+- Create a `.env` in the project root and set your API base URL (Create React App requires the `REACT_APP_` prefix):
 ```bash
 REACT_APP_API_BASE=http://localhost:5000
 ```
-- The app derives endpoints from this base, e.g. `AUTH_API_BASE = ${REACT_APP_API_BASE}/api/auth`, `CHAT_API_BASE = ${REACT_APP_API_BASE}/api/chat` (see `src/config/env.ts`).
+- If not set, the app defaults to `http://18.223.20.255:5000` (see `src/config/env.ts`).
+- The app derives endpoints from this base, e.g. `AUTH_API_BASE = ${REACT_APP_API_BASE}/api/auth`, `CHAT_API_BASE = ${REACT_APP_API_BASE}/api/chat`.
 
 4) Start the dev server
 ```bash
@@ -38,6 +39,7 @@ npm run build
 - Light/dark theme with no flash on load
 - Basic auth: login, signup, and guest mode
 - Conversation actions: summarize, delete
+- Streaming responses: WebSocket first, with SSE fallback
 
 ## Theming (no flash dark mode)
 - The theme is persisted in `localStorage` and applied pre-hydration.
@@ -53,17 +55,20 @@ src/
     ui/           # UI primitives (Button, IconButton, Input, Textarea, Card, Loader)
   context/        # React contexts (auth)
   hooks/          # Custom hooks (theme, auth, localStorage)
-  pages/          # Route-level pages (AuthPage)
+  pages/          # Route-level pages (AuthPage, ChatPage)
   types/          # Shared TypeScript types
-  utils/          # Utilities (cn, storage, time)
+  utils/          # Utilities (cn, storage, time, chat helpers)
 ```
 
 ## Environment & API
 - Configure `REACT_APP_API_BASE` to point at your backend (prefer HTTPS in production).
-- Endpoints used by the app:
-  - Auth: `/api/auth/signup`, `/api/auth/login`, `/api/auth/me`, `/api/auth/logout` (optional on backend)
-  - Chat: `/api/chat/conversations`, `/api/chat/messages/:id`, `/api/chat/create`, `/api/chat/delete/:id`, `/api/chat/summarize/:id`
-- If using cookie-based auth, ensure your backend CORS allows credentials and set cookies with `SameSite=None; Secure`.
+- Authentication: this app uses Bearer tokens. On successful signup/login, store the token in localStorage key `chat.token` and include it in the `Authorization: Bearer <token>` header. See `src/api/authApi.ts` and `src/utils/storage.ts`.
+- Endpoints expected by the app:
+  - Auth: `/api/auth/signup`, `/api/auth/login`
+  - Chat REST: `/api/chat/conversations`, `/api/chat/messages/:id`, `/api/chat/create`, `/api/chat/delete/:id`, `/api/chat/summarize/:id`
+  - Chat streaming (SSE): `POST /api/chat/stream` with `Accept: text/event-stream`
+  - Chat streaming (WebSocket): `GET {API_BASE_WS}/api/chat/ws/:conversationId` where `{API_BASE_WS}` is `REACT_APP_API_BASE` with `http`→`ws` or `https`→`wss`
+- The app attempts WebSocket streaming first and falls back to SSE automatically.
 
 ## Scripts
 ```bash
@@ -81,3 +86,5 @@ npm test         # test runner (CRA)
 - API not reachable → set `REACT_APP_API_BASE` or start backend
 - CORS errors → allow `http://localhost:3000` on the backend (and credentials if needed)
 - Dev server port in use → `PORT=3001 npm start`
+- WebSocket 101/upgrade issues → ensure your reverse proxy forwards `Upgrade`/`Connection` headers and allows `wss` to your backend
+- SSE not streaming → return `Content-Type: text/event-stream` and flush data in `data:` frames separated by blank lines
