@@ -1,12 +1,13 @@
 import { BackendMessage, ConversationSummary, Message, Role } from '../types/chat';
 import { CHAT_API_BASE as API_BASE, API_BASE_URL } from 'config/env';
 import { getFromLocalStorage, LS_KEYS } from '../utils/storage'
+import { generateId } from '../utils/string';
 
 function mapBackendMessage(raw: BackendMessage): Message | null {
   if (!raw) return null;
   if (raw.role === 'system') return null;
   return {
-    id: String(raw.id ?? crypto.randomUUID()),
+    id: String(raw.id ?? generateId()),
     role: (raw.role as Role) ?? 'assistant',
     content: (raw as any).content ?? '',
     createdAt: raw.created_at,

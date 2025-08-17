@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Plus, ChevronLeft, ChevronRight, Moon, Sun, User, Menu, X, Wand2, Copy } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Moon, Sun, User, Menu, X, Wand2 } from "lucide-react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { LS_KEYS } from "../utils/storage";
 import { timeAgo } from "../utils/time";
@@ -15,9 +15,8 @@ import { Button } from "../components/ui/Button";
 import { IconButton } from "../components/ui/IconButton";
 import { Loader } from "../components/ui/Loader";
 import { AppLogo } from "../components/ui/AppLogo";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { buildConversationSummary } from '../utils/chat';
+import { generateId } from '../utils/string';
 import { SummaryModal } from '../components/SummaryModal';
 
 export default function ChatApp() {
@@ -87,7 +86,7 @@ export default function ChatApp() {
 
   async function handleSend(text: string) {
     const userMsg: Message = {
-      id: `local-${crypto.randomUUID()}`,
+      id: generateId('local-'),
       role: "user",
       content: text,
       createdAt: new Date().toISOString(),
@@ -97,7 +96,7 @@ export default function ChatApp() {
     const payload = { conversation_id: currentConversationId, message: text, user_id: userId } as { conversation_id: string | null; message: string; user_id?: string | null };
 
     try {
-      const assistantId = `assist-${crypto.randomUUID()}`;
+      const assistantId = generateId('assist-');
       setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: '...', isStreaming: true } as Message]);
 
       let streamed = '';
@@ -144,7 +143,7 @@ export default function ChatApp() {
       console.log("ERROR", err);
       setMessages((prev) => [
         ...prev,
-        { id: `err-${crypto.randomUUID()}`, role: "assistant", content: "Sorry, something went wrong while getting the response." },
+        { id: generateId('err-'), role: "assistant", content: "Sorry, something went wrong while getting the response." },
       ]);
     }
   }
