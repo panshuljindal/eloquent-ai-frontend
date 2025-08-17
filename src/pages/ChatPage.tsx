@@ -305,9 +305,6 @@ export default function ChatApp() {
               {messages.map((m) => (
                 <ChatBubble key={m.id} message={m} />
               ))}
-              {isAwaitingResponse && (
-                <Loader label="Generating..." className={cn("max-w-3xl mx-auto px-4 py-5", theme === "dark" ? "text-white/60" : "text-gray-600")} />
-              )}
             </div>
           )}
         </div>
