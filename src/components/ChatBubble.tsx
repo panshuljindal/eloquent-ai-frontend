@@ -15,6 +15,7 @@ function normalizeStreamingMarkdown(text: string): string {
 export function ChatBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
   const content = message.isStreaming ? normalizeStreamingMarkdown(message.content) : message.content;
+  const showTyping = message.isStreaming && message.content.trim() === '...';
   return (
     <div className={cn('w-full')}>
       <div className="max-w-3xl mx-auto px-4 py-5">
@@ -36,41 +37,49 @@ export function ChatBubble({ message }: { message: Message }) {
                   : 'prose-slate bg-white border border-black/10 shadow-sm dark:bg-[#2a2b32] dark:border-white/5 dark:prose-invert'
               )}
             >
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
-                components={{
-                  p: ({ node, ...props }) => (
-                    <p {...props} className={cn('leading-7 text-[15px]')} />
-                  ),
-                  li: ({ node, ...props }) => (
-                    <li {...props} className={cn('leading-7 text-[15px]')} />
-                  ),
-                  strong: ({ node, ...props }) => (
-                    <strong {...props} className="font-semibold" />
-                  ),
-                  a: ({ node, ...props }) => (
-                    <a {...props} target="_blank" rel="noopener noreferrer nofollow">{props.children}</a>
-                  ),
-                  code: ({ node, inline, className, children, ...props }: any) => (
-                    <code
-                      className={cn(
-                        className || '',
-                        inline
-                          ? isUser
-                            ? 'px-1.5 py-0.5 rounded bg-white/20 text-white'
-                            : 'px-1.5 py-0.5 rounded bg-black/10 text-gray-900 dark:bg-white/10 dark:text-white'
-                          : ''
-                      )}
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  ),
-                }}
-              >
-                {content}
-              </ReactMarkdown>
+              {showTyping ? (
+                <div className="flex items-center gap-1 text-[15px] leading-7">
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                  <span className="typing-dot" />
+                </div>
+              ) : (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                  components={{
+                    p: ({ node, ...props }) => (
+                      <p {...props} className={cn('leading-7 text-[15px]')} />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li {...props} className={cn('leading-7 text-[15px]')} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong {...props} className="font-semibold" />
+                    ),
+                    a: ({ node, ...props }) => (
+                      <a {...props} target="_blank" rel="noopener noreferrer nofollow">{props.children}</a>
+                    ),
+                    code: ({ node, inline, className, children, ...props }: any) => (
+                      <code
+                        className={cn(
+                          className || '',
+                          inline
+                            ? isUser
+                              ? 'px-1.5 py-0.5 rounded bg-white/20 text-white'
+                              : 'px-1.5 py-0.5 rounded bg-black/10 text-gray-900 dark:bg-white/10 dark:text-white'
+                            : ''
+                        )}
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    ),
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              )}
             </div>
           </div>
         </div>
