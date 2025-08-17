@@ -10,7 +10,7 @@ export function Composer(props: { disabled?: boolean; onSend: (text: string) => 
 
   function handleSend() {
     const content = text.trim();
-    if (!content) return;
+    if (!content || disabled) return;
     onSend(content);
     setText('');
     textRef.current?.focus();
@@ -34,7 +34,7 @@ export function Composer(props: { disabled?: boolean; onSend: (text: string) => 
             onKeyDown={onKeyDown}
             placeholder="Message Operator"
             rows={3}
-            disabled={disabled}
+            disabled={false}
           />
           <div className="flex items-center justify-end px-3 pb-3">
             <Button

@@ -24,7 +24,7 @@ export default function ChatApp() {
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingConversationHistory, setIsLoadingConversationHistory] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isLoading] = useState(false);
+  const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
   const { theme, toggle } = useTheme();
 
   const [currentConversationId, setCurrentConversationId] = useLocalStorage<string | null>(LS_KEYS.currentId, null);
@@ -85,6 +85,7 @@ export default function ChatApp() {
   }
 
   async function handleSend(text: string) {
+    setIsAwaitingResponse(true);
     const userMsg: Message = {
       id: generateId('local-'),
       role: "user",
@@ -145,6 +146,8 @@ export default function ChatApp() {
         ...prev,
         { id: generateId('err-'), role: "assistant", content: "Sorry, something went wrong while getting the response." },
       ]);
+    } finally {
+      setIsAwaitingResponse(false);
     }
   }
 
@@ -302,14 +305,14 @@ export default function ChatApp() {
               {messages.map((m) => (
                 <ChatBubble key={m.id} message={m} />
               ))}
-              {isLoading && (
+              {isAwaitingResponse && (
                 <Loader label="Generating..." className={cn("max-w-3xl mx-auto px-4 py-5", theme === "dark" ? "text-white/60" : "text-gray-600")} />
               )}
             </div>
           )}
         </div>
 
-        <Composer disabled={isLoading} onSend={handleSend} />
+        <Composer disabled={isAwaitingResponse} onSend={handleSend} />
         <SummaryModal
           open={summaryModalOpen}
           text={summaryText}
