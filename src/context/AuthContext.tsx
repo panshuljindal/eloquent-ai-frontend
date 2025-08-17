@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSummaries([]);
     }
     return id;
-  }, [setUserId, setGuest, setProfile, setSummaries]);
+  }, [setUserId, setGuest, setProfile, setSummaries, setToken]);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
     const { userId: id, name: returnedName, token: returnedToken } = await signupApi({ name, email, password });
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSummaries([]);
     }
     return id;
-  }, [setUserId, setGuest, setProfile, setSummaries]);
+  }, [setUserId, setGuest, setProfile, setSummaries, setToken]);
 
   const loginAsGuest = useCallback(() => {
     setUserId(null);
