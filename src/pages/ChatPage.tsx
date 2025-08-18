@@ -65,16 +65,8 @@ export default function ChatApp() {
   }, [userId, setConversationSummaries]);
 
   async function handleSelectConversation(id: string) {
+    setMessages([]);
     setCurrentConversationId(id);
-    setIsLoadingConversationHistory(true);
-    try {
-      const history = await fetchConversationMessages(id);
-      setMessages(history);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoadingConversationHistory(false);
-    }
     setMobileSidebarOpen(false);
   }
 
@@ -83,6 +75,27 @@ export default function ChatApp() {
     setMessages([]);
     setMobileSidebarOpen(false);
   }
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadConversation() {
+      if (!currentConversationId) return;
+      if (messages.length > 0) return;
+      setIsLoadingConversationHistory(true);
+      try {
+        const history = await fetchConversationMessages(currentConversationId);
+        if (!cancelled) setMessages(history);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setIsLoadingConversationHistory(false);
+      }
+    }
+    loadConversation();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentConversationId]);
 
   async function handleSend(text: string) {
     setIsAwaitingResponse(true);
@@ -301,7 +314,7 @@ export default function ChatApp() {
               </div>
             </div>
           ) : (
-            isLoadingConversationHistory ? <Loader label="Loading Converstion..." className="flex items-center justify-center h-full w-full" /> : <div className="">
+            isLoadingConversationHistory ? <Loader label="Loading Conversation..." className="flex items-center justify-center h-full w-full" /> : <div className="">
               {messages.map((m) => (
                 <ChatBubble key={m.id} message={m} />
               ))}

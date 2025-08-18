@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { LS_KEYS } from '../utils/storage';
+import { LS_KEYS, setInLocalStorage } from '../utils/storage';
 import { loginApi, signupApi } from '../api/authApi';
 import { fetchConversationList } from '../api/chatApi';
 import { ConversationSummary } from '../types/chat';
@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile({ name });
     setGuest(false);
     setToken(returnedToken ?? null);
+    setInLocalStorage(LS_KEYS.token, returnedToken ?? null);
     try {
       const items = await fetchConversationList(id);
       setSummaries(items);
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserId(id);
     setProfile({ name: returnedName ?? name });
     setToken(returnedToken ?? null);
+    setInLocalStorage(LS_KEYS.token, returnedToken ?? null);
     setGuest(false);
     try {
       const items = await fetchConversationList(id);
